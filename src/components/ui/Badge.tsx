@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { SignalSeverity, EvidenceStatus } from "@/types/analysis";
 
 interface BadgeProps {
@@ -54,10 +54,11 @@ export const SeverityBadge: React.FC<{ severity: SignalSeverity }> = ({ severity
 
 export const EvidenceBadge: React.FC<{ status: EvidenceStatus }> = ({ status }) => {
   const mapping: Record<EvidenceStatus, { label: string; variant: BadgeProps["variant"] }> = {
-    VERIFIED_LEGIT: { label: "Verified Authentic", variant: "success" },
-    FLAGGED_UNREGISTERED: { label: "Unregistered Entity", variant: "danger" },
-    UNABLE_TO_VERIFY: { label: "Unverified Claim", variant: "warning" },
-    INSUFFICIENT_INFORMATION: { label: "Needs More Evidence", variant: "info" },
+    SUPPORTED: { label: "Supported by Official Source", variant: "success" },
+    UNVERIFIED: { label: "Unverified Claim", variant: "warning" },
+    CONTRADICTED: { label: "Contradicts Regulations", variant: "danger" },
+    INSUFFICIENT_INFORMATION: { label: "Insufficient Info", variant: "info" },
+    SOURCE_UNAVAILABLE: { label: "Source Unavailable", variant: "neutral" },
   };
 
   const config = mapping[status];

@@ -75,7 +75,7 @@ export default function ResultPlaceholderPage() {
                 </h3>
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded flex items-center justify-between text-xs">
                   <span>Official SEBI Intermediary Registry</span>
-                  <EvidenceBadge status="FLAGGED_UNREGISTERED" />
+                  <EvidenceBadge status="CONTRADICTED" />
                 </div>
               </div>
             </Card>

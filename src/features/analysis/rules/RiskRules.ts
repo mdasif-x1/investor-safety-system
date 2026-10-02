@@ -1,4 +1,4 @@
-﻿import { RiskSignal, Claim } from "@/types/analysis";
+import { RiskSignal } from "@/types/analysis";
 
 export interface AnalysisContext {
   rawText: string;
@@ -11,12 +11,26 @@ export interface IRiskRule {
   evaluate(context: AnalysisContext): RiskSignal | null;
 }
 
-// Helper for basic context negation check (e.g. "not guaranteed", "no guaranteed")
-function isNegated(text: string, matchIndex: number): boolean {
-  const windowStart = Math.max(0, matchIndex - 35);
-  const precedingText = text.substring(windowStart, matchIndex).toLowerCase();
-  const negationWords = ["not", "no ", "never", "without", "disclaimer", "education", "educational", "fake"];
-  return negationWords.some((neg) => precedingText.includes(neg));
+function isNegatedOrEducational(text: string, matchIndex: number): boolean {
+  const windowStart = Math.max(0, matchIndex - 40);
+  const windowEnd = Math.min(text.length, matchIndex + 50);
+  const snippet = text.substring(windowStart, windowEnd).toLowerCase();
+
+  const negationPhrases = [
+    "not promised",
+    "are not promised",
+    "never promised",
+    "no guaranteed",
+    "not guaranteed",
+    "never share your",
+    "dont share",
+    "educational purposes only",
+    "learn about common investment scams",
+    "how fake investment",
+    "explain mutual fund risks"
+  ];
+
+  return negationPhrases.some((phrase) => snippet.includes(phrase));
 }
 
 export class GuaranteedReturnRule implements IRiskRule {
@@ -29,16 +43,17 @@ export class GuaranteedReturnRule implements IRiskRule {
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
-      if (isNegated(text, match.index)) {
-        return null; // Context-aware negation avoidance
+      if (isNegatedOrEducational(text, match.index)) {
+        return null;
       }
       return {
         id: "sig_r01",
         code: this.code,
         title: "Guaranteed Return Language",
-        description: "Promises of assured or fixed returns in equity/derivatives carry high risk. SEBI rules prohibit guaranteed return promises.",
+        description: "Promises of guaranteed or fixed returns carry high risk. SEBI regulations explicitly prohibit guaranteed return promises on equity investments.",
         severity: "CRITICAL",
         matchedTextSnippet: match[0],
+        relatedClaimId: "cl_return_1",
       };
     }
     return null;
@@ -55,12 +70,12 @@ export class UrgencyPressureRule implements IRiskRule {
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
-      if (isNegated(text, match.index)) return null;
+      if (isNegatedOrEducational(text, match.index)) return null;
       return {
         id: "sig_r02",
         code: this.code,
         title: "Artificial Urgency Pressure",
-        description: "Pressure to act quickly limits your time to independently verify credentials before transferring funds.",
+        description: "Creating artificial deadline pressure reduces your time to independently verify credentials before transferring funds.",
         severity: "HIGH",
         matchedTextSnippet: match[0],
       };
@@ -75,18 +90,19 @@ export class DirectPaymentRequestRule implements IRiskRule {
 
   evaluate(context: AnalysisContext): RiskSignal | null {
     const text = context.normalizedText;
-    const regex = /(deposit|pay|transfer|fee|upi|gpay|phonepe)\s*(?:₹|rs\.?|rupees)?\s*\d+/i;
+    const regex = /(deposit|pay|transfer|fee|upi|gpay|phonepe) \d+/i;
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
-      if (isNegated(text, match.index)) return null;
+      if (isNegatedOrEducational(text, match.index)) return null;
       return {
         id: "sig_r03",
         code: this.code,
         title: "Direct Upfront Payment Request",
-        description: "Asks for upfront fees or deposits into personal accounts or unverified advisory channels.",
+        description: "Asks for monetary transfer into unverified advisory channels or personal bank/UPI destinations.",
         severity: "CRITICAL",
         matchedTextSnippet: match[0],
+        relatedClaimId: "cl_payment_1",
       };
     }
     return null;
@@ -103,17 +119,15 @@ export class RegulatoryIdentityClaimRule implements IRiskRule {
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
-      // If message is purely educational/disclaimer, avoid blind trigger
-      if (text.toLowerCase().includes("educational purposes only") && isNegated(text, match.index)) {
-        return null;
-      }
+      if (isNegatedOrEducational(text, match.index)) return null;
       return {
         id: "sig_r04",
         code: this.code,
         title: "Unverified Regulatory Identity Claim",
-        description: "The sender claims official SEBI registration or approval; this must be verified on official SEBI SCORES database.",
+        description: "The sender claims official SEBI registration or approval; this must be independently verified on official public registers.",
         severity: "HIGH",
         matchedTextSnippet: match[0],
+        relatedClaimId: "cl_sebi_1",
       };
     }
     return null;
@@ -130,14 +144,15 @@ export class OffPlatformRedirectionRule implements IRiskRule {
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
-      if (isNegated(text, match.index)) return null;
+      if (isNegatedOrEducational(text, match.index)) return null;
       return {
         id: "sig_r05",
         code: this.code,
         title: "Off-Platform Group Redirection",
-        description: "Moves conversation to private messaging groups (Telegram/WhatsApp) where identity and oversight are difficult to verify.",
+        description: "Moves conversation to private messaging channels (Telegram/WhatsApp) where identity verification is difficult.",
         severity: "MEDIUM",
         matchedTextSnippet: match[0],
+        relatedClaimId: "cl_group_1",
       };
     }
     return null;
@@ -153,9 +168,8 @@ export class RiskEngine {
     new OffPlatformRedirectionRule(),
   ];
 
-  analyze(context: AnalysisContext): { riskSignals: RiskSignal[]; claims: Claim[] } {
+  analyze(context: AnalysisContext): RiskSignal[] {
     const riskSignals: RiskSignal[] = [];
-    const claims: Claim[] = [];
 
     for (const rule of this.rules) {
       const signal = rule.evaluate(context);
@@ -164,25 +178,6 @@ export class RiskEngine {
       }
     }
 
-    // Extract basic explicit claims
-    if (context.normalizedText.toLowerCase().includes("guaranteed") || context.normalizedText.toLowerCase().includes("assured")) {
-      claims.push({
-        id: "cl_1",
-        statement: "Offers guaranteed high returns on investment",
-        category: "GUARANTEED_RETURN",
-        explanation: "Message promises fixed or risk-free financial returns.",
-      });
-    }
-
-    if (context.normalizedText.toLowerCase().includes("sebi")) {
-      claims.push({
-        id: "cl_2",
-        statement: "Claims SEBI registration or official affiliation",
-        category: "UNREGISTERED_ADVISORY",
-        explanation: "Message asserts regulatory approval or registration status.",
-      });
-    }
-
-    return { riskSignals, claims };
+    return riskSignals;
   }
 }
