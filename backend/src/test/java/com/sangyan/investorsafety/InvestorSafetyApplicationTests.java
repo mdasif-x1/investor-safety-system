@@ -170,6 +170,22 @@ class InvestorSafetyApplicationTests {
         assertThat(body.evidence().get(0).explanation()).contains("[AUTHORITATIVE FIXTURE]");
     }
 
+    // Phase 5.13 Hinglish Semantic Analysis Test
+    @Test
+    void testPhase513_HinglishMessageSemanticAnalysis() {
+        AnalysisRequest request = new AnalysisRequest("Bhai SEBI registered hu. 25% fix return milega. Bas 20k bhej do aur telegram grp join kro. Limited seats!");
+        ResponseEntity<AnalysisResponse> response = restTemplate.postForEntity("/api/v1/analysis", request, AnalysisResponse.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AnalysisResponse body = response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.claims()).hasSizeGreaterThanOrEqualTo(4);
+        assertThat(body.riskSignals()).hasSizeGreaterThanOrEqualTo(4);
+        assertThat(body.riskSignals()).anyMatch(s -> "GUARANTEED_RETURN".equalsIgnoreCase(s.code()));
+        assertThat(body.riskSignals()).anyMatch(s -> "DIRECT_PAYMENT_REQUEST".equalsIgnoreCase(s.code()));
+        assertThat(body.riskSignals()).anyMatch(s -> "REGULATORY_IDENTITY_CLAIM".equalsIgnoreCase(s.code()));
+        assertThat(body.riskSignals()).anyMatch(s -> "OFF_PLATFORM_REDIRECTION".equalsIgnoreCase(s.code()));
+    }
+
     // Phase 5.6.1 Dedicated Security & Reliability Regression Tests
     @Test
     void testPhase561_BlankInput_ReturnsBadRequest() {

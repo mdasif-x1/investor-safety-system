@@ -14,6 +14,7 @@ import { AnalysisStage } from "@/types/analysis";
 
 const PRESET_SAMPLE = {
   suspicious: "SEBI Registered Expert. Guaranteed 25% monthly returns. Limited seats. Join our Telegram group and deposit ₹20,000 today.",
+  hinglish: "Bhai SEBI registered hu. 25% fix return milega. Bas 20k bhej do aur telegram grp join kro. Limited seats!",
   legitimate: "SEBI investor education webinar explaining mutual fund risks and diversification.",
   adversarial: "Educational purposes only. Guaranteed returns are not promised. Join our Telegram channel to learn about common investment scams.",
 };
@@ -209,6 +210,17 @@ export default function CheckPage() {
                     className="px-2.5 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium transition-colors"
                   >
                     Suspicious WhatsApp Tip
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInputText(PRESET_SAMPLE.hinglish);
+                      setSelectedFile(null);
+                      setImagePreview(null);
+                    }}
+                    className="px-2.5 py-1 rounded bg-purple-100 hover:bg-purple-200 text-purple-900 font-medium transition-colors"
+                  >
+                    Hinglish WhatsApp Tip
                   </button>
                   <button
                     type="button"
