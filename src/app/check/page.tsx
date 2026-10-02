@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -104,9 +104,13 @@ export default function CheckPage() {
 
       // Navigate to preliminary result page
       router.push(`/analysis/${result.id}`);
-    } catch (err) {
+    } catch (err: unknown) {
       setProcessingState("ERROR");
-      setErrorMsg("An unexpected error occurred during message inspection. Please try again.");
+      if (err instanceof Error && err.message) {
+        setErrorMsg(err.message);
+      } else {
+        setErrorMsg("An unexpected error occurred during message inspection. Please try again.");
+      }
     }
   };
 
