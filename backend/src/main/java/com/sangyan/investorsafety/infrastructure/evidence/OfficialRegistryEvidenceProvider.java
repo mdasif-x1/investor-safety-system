@@ -37,10 +37,15 @@ public class OfficialRegistryEvidenceProvider implements EvidenceProvider {
         @Value("${investor-safety.verification.enabled:false}") boolean verificationEnabled,
         @Value("${investor-safety.verification.base-url:https://scores.sebi.gov.in/}") String baseUrl
     ) {
+        org.springframework.http.client.SimpleClientHttpRequestFactory requestFactory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3000);
+        requestFactory.setReadTimeout(3000);
+
         this.fallbackProvider = fallbackProvider;
         this.verificationEnabled = verificationEnabled;
         this.restClient = RestClient.builder()
             .baseUrl(baseUrl)
+            .requestFactory(requestFactory)
             .build();
     }
 
