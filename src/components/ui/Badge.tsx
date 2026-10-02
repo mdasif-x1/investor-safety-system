@@ -53,14 +53,48 @@ export const SeverityBadge: React.FC<{ severity: SignalSeverity }> = ({ severity
 };
 
 export const EvidenceBadge: React.FC<{ status: EvidenceStatus }> = ({ status }) => {
-  const mapping: Record<EvidenceStatus, { label: string; variant: BadgeProps["variant"] }> = {
-    SUPPORTED: { label: "Supported by Official Source", variant: "success" },
-    UNVERIFIED: { label: "Unverified Claim", variant: "warning" },
-    CONTRADICTED: { label: "Contradicts Regulations", variant: "danger" },
-    INSUFFICIENT_INFORMATION: { label: "Insufficient Info", variant: "info" },
-    SOURCE_UNAVAILABLE: { label: "Source Unavailable", variant: "neutral" },
+  const mapping: Record<EvidenceStatus, { label: string; subtext: string; variant: BadgeProps["variant"] }> = {
+    SUPPORTED: {
+      label: "Official Record Match (Verified)",
+      subtext: "Official source matches this claim",
+      variant: "success",
+    },
+    UNVERIFIED: {
+      label: "Unverified Claim (Abhi Verify Nahi Hua)",
+      subtext: "Independent official proof is not established",
+      variant: "warning",
+    },
+    CONTRADICTED: {
+      label: "Mismatch with Official Source",
+      subtext: "Authoritative records conflict with this statement",
+      variant: "danger",
+    },
+    INSUFFICIENT_INFORMATION: {
+      label: "Need Registration ID (Enough Details Nahi)",
+      subtext: "Missing registration number to query official registry",
+      variant: "info",
+    },
+    SOURCE_UNAVAILABLE: {
+      label: "Official Portal Offline (Source Unavailable)",
+      subtext: "Official registry could not be reached at this time",
+      variant: "neutral",
+    },
   };
 
-  const config = mapping[status];
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  const config = mapping[status] || {
+    label: status,
+    subtext: "",
+    variant: "neutral",
+  };
+
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      <Badge variant={config.variant}>{config.label}</Badge>
+      {config.subtext && (
+        <span className="text-[10px] text-[var(--text-muted)] italic pl-0.5">
+          {config.subtext}
+        </span>
+      )}
+    </div>
+  );
 };
