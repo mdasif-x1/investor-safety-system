@@ -38,12 +38,12 @@ export class RuleBasedClaimExtractor implements IClaimExtractor {
     }
 
     // 3. Payment Request Claim
-    const paymentRegex = /(deposit|pay|transfer|fee|upi|gpay|phonepe)\s+(?:rupees|rs|inr|₹)?\s*\d+/i;
+    const paymentRegex = /(?:deposit|pay|transfer|send)\s+(?:the\s+)?(?:registration\s+|joining\s+|advisory\s+)?(?:fee|amount|deposit|money)?\s*(?:of\s+)?(?:rupees|rs\.?|inr|₹)?\s*\d+/i;
     const paymentMatch = normalized.match(paymentRegex);
     if (paymentMatch) {
       claims.push({
         id: "cl_payment_1",
-        statement: "The message requests an upfront payment or deposit.",
+        statement: "The message contains a request for an upfront payment or deposit.",
         category: "PAYMENT_REQUEST",
         sourceSnippet: paymentMatch[0],
         explanation: "Sender requires a money transfer before unlocking stock tips or group access.",

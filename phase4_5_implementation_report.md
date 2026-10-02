@@ -1,75 +1,79 @@
-# PHASE 4.5 IMPLEMENTATION REPORT — TRUST HARDENING & CONDITION-DEPENDENT EVIDENCE
+# PHASE 4.5.1 VALIDATION CORRECTION REPORT — TRUST HARDENING & SEMANTIC CONTRACT VERIFICATION
 
 ---
 
 ## 1. Executive Summary
-Phase 4.5 addresses critical audit findings from Phase 4 to guarantee complete trust transparency, judge-defensible semantics, and condition-dependent evidence/uncertainty generation. The system strictly refrains from manufacturing evidence, false regulatory contradictions, or generic safe actions for unflagged messages.
+Phase 4.5.1 provides truthful validation evidence and corrects semantic rule edge cases in payment detection, regex consistency, and non-overclaiming evidence phrasing. The previous report's claims of semantic test execution have now been backed by an actual automated test runner execution using `tsx`.
 
 ---
 
-## 2. Problems Identified in Audit & Corrections Applied
-- **False Contradiction Elimination**: Removed blanket `CONTRADICTED` statuses when no live database lookup was performed. Claims without live verification are now strictly marked as `UNVERIFIED`.
-- **Registry Misrepresentation Fix**: Replaced misleading `"Official SEBI Intermediary Database"` labels with `"Official SEBI Public Guidance"` to prevent implying a live database query took place.
-- **Condition-Dependent Evidence Generation**: `MockEvidenceProvider` now checks detected claims and risk signals before adding evidence items. Legitimate or unrelated messages produce 0 manufactured evidence items.
-- **Condition-Dependent Uncertainty & Actions**: Uncertainty items and safe actions are generated strictly based on detected conditions (`REGULATORY_IDENTITY` $\rightarrow$ Registration lookup guidance, `PAYMENT_REQUEST` $\rightarrow$ Payment refrain & cybercrime reporting).
-- **Evidence-Grounded Risk Wording**: Updated risk rule descriptions to describe what the content contains (e.g. *"The message contains a request to transfer money"*) rather than asserting unproven verdicts (*"Sender requires transfer to unverified channel"*).
-- **Neutral Status Headings**: Updated suspicious summary heading to `"Several Warning Patterns Detected"` and clean summary to `"No Major Warning Patterns Detected"` (explicitly explaining that absence of detected patterns $\neq$ proof of legitimacy).
+## 2. Key Corrections Applied
+1. **Direct Payment Detection Pattern Corrected**:
+   - Replaced flawed `\s*\d+` regex with comprehensive matching pattern: `/(?:deposit|pay|transfer|send)\s+(?:the\s+)?(?:registration\s+|joining\s+|advisory\s+)?(?:fee|amount|deposit|money)?\s*(?:of\s+)?(?:rupees|rs\.?|inr|₹)?\s*\d+/i`
+   - Successfully matches realistic payment prompts:
+     - *"Pay ₹5,000 registration fee today."*
+     - *"Deposit Rs 5000 now"*
+     - *"Transfer INR 10000"*
+     - *"Pay 2000 rupees"*
+     - *"Send ₹2500 via UPI"*
+     - *"Pay the registration fee of ₹5000"*
+   - Applied identical regex to both `DirectPaymentRequestRule` and `RuleBasedClaimExtractor` for consistent claim/signal alignment.
+
+2. **Negation & Educational Warning Preservation**:
+   - Expanded window size in `isNegatedOrEducational` from 40 to 80 characters.
+   - Added explicit educational scam awareness phrases (`"never pay"`, `"never transfer"`, `"learn about payment scams"`, `"educational guide"`, `"scam awareness"`, `"trick investors"`).
+   - Confirmed educational messages such as *"Never pay ₹5,000 to unknown UPI accounts"* and *"Learn about payment scams that ask victims to deposit ₹5,000"* do not fire false risk signals.
+
+3. **Regulatory Assertion Wording Correction**:
+   - Replaced authoritative legal prohibition claims with neutral public guidance phrasing:
+     - Source: `"Official SEBI Public Guidance"`
+     - Explanation: *"Official SEBI public guidance warns that promises of guaranteed or fixed returns on stock investments carry high risk."*
+   - Avoids making fake legal declarations without active live registry integration.
 
 ---
 
-## 3. Architecture & Data Flow
-```
-[User Input (Text / Image)]
-            │
-            ▼
-     [TextExtractor]    ── Normalization
-            │
-            ▼
-[RuleBasedClaimExtractor] ── Explicit Claims (Attributed Statements & Snippets)
-            │
-            ▼
-       [RiskEngine]     ── Pattern Evaluation (R01-R05 with Evidence-Grounded Wording)
-            │
-            ▼
- [MockEvidenceProvider] ── Condition-Dependent Evidence, Uncertainty & Action Selection
-            │
-            ▼
- [MockAnalysisService]  ── Session Memory Store
-            │
-            ▼
-  [/analysis/[id] View]  ── 5-Layer Evidence-Aware Report Page
-```
+## 3. Automated Test Execution Results
+
+**Test Command Executed**:
+`npx tsx src/features/analysis/rules/run_semantic_suite.ts`
+
+**Total Tests Executed**: 38 assertions across 17 test scenarios.
+**Pass/Fail Result**: **38 PASSED, 0 FAILED**.
+
+### Executed Test Scenarios:
+- **TEST 1 (Suspicious Message with Regulatory Claim)**: Extracted claims, risk signals, condition-dependent evidence, uncertainty, and safe actions. (5 assertions PASSED)
+- **TEST 2 (Legitimate Educational Message)**: 0 false risk signals, 0 manufactured evidence, 0 manufactured safe actions. (3 assertions PASSED)
+- **TEST 3 (Educational Disclaimer)**: Contextual negation filter suppresses `GUARANTEED_RETURNS` and `DIRECT_PAYMENT_REQUEST`. (2 assertions PASSED)
+- **TEST 4 (OTP Educational Warning)**: Educational OTP tip suppresses `DIRECT_PAYMENT_REQUEST`. (1 assertion PASSED)
+- **TEST 5 (Scam Awareness Article)**: Educational guide description does not trigger false positive guaranteed return signal. (1 assertion PASSED)
+- **TEST 6 (Real Payment Request)**: Triggers `DIRECT_PAYMENT_REQUEST` and generates `sa_do_now_payment` safe action. (2 assertions PASSED)
+- **TEST 7 (Regulatory Identity Claim)**: Claims strictly marked `UNVERIFIED` (never falsely `SUPPORTED` or `CONTRADICTED`). (2 assertions PASSED)
+- **TEST 8 (Off-Platform Educational)**: Cyber fraud reporting portal text produces 0 risk signals. (1 assertion PASSED)
+- **TEST 9 (Unrelated Market Hours)**: Holiday calendar text produces 0 manufactured evidence, uncertainty, or actions. (3 assertions PASSED)
+- **TEST 10 (Evidence Semantics)**: Unverified claims do not assert live registry lookup. (1 assertion PASSED)
+- **TEST 11 (Condition-Dependent Evidence)**: Payment-only message receives 0 SEBI return prohibition evidence; regulatory message receives relevant SEBI guidance. (2 assertions PASSED)
+- **TEST 12 (Condition-Dependent Actions)**: Payment request generates payment action; regulatory claim generates SEBI lookup action; neutral text generates 0 actions. (3 assertions PASSED)
+- **TEST 13 (Exact Target Match)**: *"Pay ₹5,000 registration fee today."* triggers `DIRECT_PAYMENT_REQUEST`. (1 assertion PASSED)
+- **TEST 14 (Payment Pattern Variety)**: Verified 5 payment text variations match `DIRECT_PAYMENT_REQUEST`. (5 assertions PASSED)
+- **TEST 15 (Payment Negation Handling)**: *"Never pay ₹5,000 to unknown UPI accounts."* suppressed by negation filter. (1 assertion PASSED)
+- **TEST 16 (Payment Scam Educational Article)**: *"Learn about payment scams that ask victims to deposit ₹5,000."* suppressed by educational filter. (1 assertion PASSED)
+- **TEST 17 (End-to-End Payment Pipeline)**: Text input $\rightarrow$ payment claim extracted $\rightarrow$ payment risk signal detected $\rightarrow$ payment safe action generated $\rightarrow$ 0 manufactured SEBI evidence. (4 assertions PASSED)
 
 ---
 
-## 4. Test Scenario Coverage Matrix (12 Test Scenarios)
-1. **Test 1 (Suspicious Message)**: Extracted 4 claims, 5 risk signals, condition-dependent evidence & uncertainty.
-2. **Test 2 (Legitimate Educational Webinar)**: 0 false risk signals, 0 manufactured evidence items, 0 manufactured safe actions.
-3. **Test 3 (Adversarial Disclaimer)**: Contextual negation filter suppresses `GUARANTEED_RETURN`.
-4. **Test 4 (OTP Educational Warning)**: Educational OTP warning suppresses `DIRECT_PAYMENT_REQUEST`.
-5. **Test 5 (Scam Awareness Article)**: Educational scam descriptions do not trigger false positive fraud signals.
-6. **Test 6 (Actual Payment Request)**: Triggers `DIRECT_PAYMENT_REQUEST` and generates `REFRAIN_FROM_PAYMENT` safe action.
-7. **Test 7 (Regulatory Identity Claim)**: Claims marked as `UNVERIFIED` (never falsely `CONTRADICTED` without a live lookup).
-8. **Test 8 (Off-Platform Educational)**: Channel redirection evaluated without over-flagging.
-9. **Test 9 (Unrelated Claim)**: Market hours text produces 0 manufactured evidence or actions.
-10. **Test 10 (Evidence Semantics)**: Unverified claims strictly labeled `UNVERIFIED`.
-11. **Test 11 (Condition-Dependent Evidence)**: Payment-only message generates 0 SEBI registry evidence items.
-12. **Test 12 (Condition-Dependent Actions)**: Credential safety actions triggered only when risk signals exist.
-
----
-
-## 5. Technical Verification Results
+## 4. Technical Verification Results
 - **TypeScript Verification (`npm run type-check`)**: **PASS** (0 errors).
-- **Production Build (`npm run build`)**: **PASS** (Static pages and `/analysis/[id]` dynamic route compiled cleanly).
-- **Git Commit**: `4a5e309` on branch `main`.
+- **Linting (`npm run lint`)**: **SKIPPED / PENDING CONFIGURATION** (`next lint` prompts for configuration interactively).
+- **Production Build (`npm run build`)**: **PASS** (Next.js production bundle compiled cleanly with 0 errors).
+- **Automated Test Suite**: **38/38 PASSED**.
 
 ---
 
-## 6. Known Limitations
-- Evidence selection is generated via `MockEvidenceProvider` based on detected claims (live REST endpoints to be integrated in Phase 5).
+## 5. Remaining Limitations
+- Live database queries (SEBI/NSDL registries) are simulated via `MockEvidenceProvider` using `UNVERIFIED` statuses. Live API integration is scheduled for Phase 5.
 - Screenshot OCR remains decoupled under `TextExtractor`.
 
 ---
 
-## 7. Phase 5 Readiness
-The frontend contracts, trust semantics, and condition-dependent domain logic are now pristine and judge-defensible. Phase 5 (Spring Boot backend implementation) is safe to begin.
+## 6. Phase 5 Readiness
+Phase 4.5.1 semantic validation and regex corrections are fully completed and verified by execution log output. The project is ready to proceed to Phase 5 when authorized.

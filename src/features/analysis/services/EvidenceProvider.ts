@@ -25,7 +25,7 @@ export class MockEvidenceProvider implements IEvidenceProvider {
 
     const hasPaymentSignal = riskSignals.some((s) => s.code === "DIRECT_PAYMENT_REQUEST");
 
-    // 1. Condition-Dependent Evidence (Only present relevant evidence for detected claims)
+    // 1. Condition-Dependent Evidence
     if (hasRegulatoryClaim) {
       evidenceItems.push({
         id: "ev_sebi_registry",
@@ -57,12 +57,12 @@ export class MockEvidenceProvider implements IEvidenceProvider {
     if (hasGuaranteedReturnClaim) {
       evidenceItems.push({
         id: "ev_guaranteed_rule",
-        sourceName: "SEBI Advisory Code of Conduct & Regulations",
+        sourceName: "Official SEBI Public Guidance",
         sourceType: "OFFICIAL_GUIDANCE",
         status: "UNVERIFIED",
-        explanation: "SEBI advisory regulations explicitly prohibit registered intermediaries from offering guaranteed or fixed returns on stock market investments.",
+        explanation: "Official SEBI public guidance warns that promises of guaranteed or fixed returns on stock investments carry high risk.",
         sourceUrl: "https://investor.sebi.gov.in/",
-        scope: "Regulatory policy guidance for investors.",
+        scope: "Public investor awareness guidance.",
       });
 
       uncertaintyItems.push({

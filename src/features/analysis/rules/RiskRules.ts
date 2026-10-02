@@ -12,8 +12,8 @@ export interface IRiskRule {
 }
 
 function isNegatedOrEducational(text: string, matchIndex: number): boolean {
-  const windowStart = Math.max(0, matchIndex - 40);
-  const windowEnd = Math.min(text.length, matchIndex + 50);
+  const windowStart = Math.max(0, matchIndex - 80);
+  const windowEnd = Math.min(text.length, matchIndex + 80);
   const snippet = text.substring(windowStart, windowEnd).toLowerCase();
 
   const negationPhrases = [
@@ -24,10 +24,18 @@ function isNegatedOrEducational(text: string, matchIndex: number): boolean {
     "not guaranteed",
     "never share your",
     "dont share",
+    "don't share",
+    "never pay",
+    "never transfer",
     "educational purposes only",
+    "educational guide",
     "learn about common investment scams",
+    "learn about payment scams",
+    "learn about",
     "how fake investment",
-    "explain mutual fund risks"
+    "explain mutual fund risks",
+    "trick investors",
+    "scam awareness"
   ];
 
   return negationPhrases.some((phrase) => snippet.includes(phrase));
@@ -50,7 +58,7 @@ export class GuaranteedReturnRule implements IRiskRule {
         id: "sig_r01",
         code: this.code,
         title: "Guaranteed Return Pattern",
-        description: "The message contains language promising guaranteed or fixed returns. SEBI regulations explicitly prohibit guaranteed return promises on equity investments.",
+        description: "The message contains language promising guaranteed or fixed returns. Official SEBI guidance warns that guaranteed return promises on equity investments carry high risk.",
         severity: "HIGH",
         matchedTextSnippet: match[0],
         relatedClaimId: "cl_return_1",
@@ -90,7 +98,7 @@ export class DirectPaymentRequestRule implements IRiskRule {
 
   evaluate(context: AnalysisContext): RiskSignal | null {
     const text = context.normalizedText;
-    const regex = /(deposit|pay|transfer|fee|upi|gpay|phonepe)\s+(?:rupees|rs|inr|₹)?\s*\d+/i;
+    const regex = /(?:deposit|pay|transfer|send)\s+(?:the\s+)?(?:registration\s+|joining\s+|advisory\s+)?(?:fee|amount|deposit|money)?\s*(?:of\s+)?(?:rupees|rs\.?|inr|₹)?\s*\d+/i;
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
