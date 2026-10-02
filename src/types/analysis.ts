@@ -1,4 +1,4 @@
-export type SignalSeverity = "CRITICAL" | "HIGH" | "MEDIUM" | "INFO";
+export type SignalSeverity = "HIGH" | "MEDIUM" | "LOW" | "INFORMATIONAL";
 
 export type ClaimCategory = 
   | "REGULATORY_IDENTITY"
@@ -27,6 +27,7 @@ export type EvidenceSourceType =
 
 export type SafeActionType = 
   | "REFRAIN_FROM_PAYMENT"
+  | "DO_NOT_SHARE_CREDENTIALS"
   | "SEBI_LOOKUP" 
   | "PRESERVE_EVIDENCE"
   | "REPORT_SUSPICIOUS_CONTENT"
@@ -68,6 +69,7 @@ export interface EvidenceItem {
   explanation: string;
   sourceUrl?: string;
   checkedAt?: string;
+  scope?: string;
 }
 
 export interface UncertaintyItem {
@@ -98,7 +100,7 @@ export interface SafetyAnalysisResult {
   normalizedText: string;
   claims: Claim[];
   riskSignals: RiskSignal[];
-  verifiedEvidence: EvidenceItem[];
+  evidence: EvidenceItem[];
   uncertaintyItems: UncertaintyItem[];
   uncertaintyExplanation: string;
   recommendedSafeActions: SafeAction[];

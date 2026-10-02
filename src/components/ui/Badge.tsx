@@ -42,10 +42,10 @@ export const Badge: React.FC<BadgeProps> = ({
 
 export const SeverityBadge: React.FC<{ severity: SignalSeverity }> = ({ severity }) => {
   const mapping: Record<SignalSeverity, { label: string; variant: BadgeProps["variant"] }> = {
-    CRITICAL: { label: "High Risk Signal", variant: "danger" },
-    HIGH: { label: "Risk Warning", variant: "danger" },
-    MEDIUM: { label: "Caution Signal", variant: "warning" },
-    INFO: { label: "Informational", variant: "info" },
+    HIGH: { label: "High Risk Pattern", variant: "danger" },
+    MEDIUM: { label: "Caution Pattern", variant: "warning" },
+    LOW: { label: "Low Risk Pattern", variant: "info" },
+    INFORMATIONAL: { label: "Informational", variant: "neutral" },
   };
 
   const config = mapping[severity];

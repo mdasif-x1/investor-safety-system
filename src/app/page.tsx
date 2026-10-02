@@ -91,7 +91,7 @@ export default function HomePage() {
                       WhatsApp Message: &quot;Join VIP SEBI Channel — Guaranteed 300% Monthly Profit&quot;
                     </h3>
                   </div>
-                  <SeverityBadge severity="CRITICAL" />
+                  <SeverityBadge severity="HIGH" />
                 </div>
 
                 {/* 5-Stage Result Matrix */}

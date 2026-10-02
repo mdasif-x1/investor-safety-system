@@ -1,4 +1,4 @@
-import { Claim, EvidenceStatus } from "@/types/analysis";
+import { Claim } from "@/types/analysis";
 
 export interface IClaimExtractor {
   extractClaims(text: string): Claim[];
@@ -15,10 +15,10 @@ export class RuleBasedClaimExtractor implements IClaimExtractor {
     if (sebiMatch) {
       claims.push({
         id: "cl_sebi_1",
-        statement: "Claims SEBI registration or regulatory approval status",
+        statement: "The message claims SEBI registration or regulatory approval status.",
         category: "REGULATORY_IDENTITY",
         sourceSnippet: sebiMatch[0],
-        explanation: "Message explicitly asserts that the sender or organization holds official SEBI registration.",
+        explanation: "Sender explicitly asserts that they hold official SEBI registration or approval.",
         evidenceStatus: "UNVERIFIED",
       });
     }
@@ -29,24 +29,24 @@ export class RuleBasedClaimExtractor implements IClaimExtractor {
     if (returnMatch) {
       claims.push({
         id: "cl_return_1",
-        statement: "Promises guaranteed or risk-free financial returns",
+        statement: "The message promises guaranteed or fixed financial returns.",
         category: "GUARANTEED_RETURN",
         sourceSnippet: returnMatch[0],
-        explanation: "Message promises fixed or assured profit margins on equity/derivatives investment.",
+        explanation: "Sender asserts specific fixed profit margins on stock investments.",
         evidenceStatus: "UNVERIFIED",
       });
     }
 
     // 3. Payment Request Claim
-    const paymentRegex = /(deposit|pay|transfer|fee|upi|gpay|phonepe)\s*(?:₹|rs\.?|rupees)?\s*\d+/i;
+    const paymentRegex = /(deposit|pay|transfer|fee|upi|gpay|phonepe)\s+(?:rupees|rs|inr|₹)?\s*\d+/i;
     const paymentMatch = normalized.match(paymentRegex);
     if (paymentMatch) {
       claims.push({
         id: "cl_payment_1",
-        statement: "Requests upfront payment or deposit to personal accounts",
+        statement: "The message requests an upfront payment or deposit.",
         category: "PAYMENT_REQUEST",
         sourceSnippet: paymentMatch[0],
-        explanation: "Message requires monetary transfer before granting access to advisory or stock tips.",
+        explanation: "Sender requires a money transfer before unlocking stock tips or group access.",
         evidenceStatus: "UNVERIFIED",
       });
     }
@@ -57,10 +57,10 @@ export class RuleBasedClaimExtractor implements IClaimExtractor {
     if (groupMatch) {
       claims.push({
         id: "cl_group_1",
-        statement: "Invites recipient to private messaging group (Telegram / WhatsApp)",
+        statement: "The message invites participation in a private messaging group (Telegram / WhatsApp).",
         category: "OFF_PLATFORM_INVITATION",
         sourceSnippet: groupMatch[0],
-        explanation: "Message invites participation in external private communication channels.",
+        explanation: "Sender redirects conversation into private channels where identity oversight is limited.",
         evidenceStatus: "UNVERIFIED",
       });
     }

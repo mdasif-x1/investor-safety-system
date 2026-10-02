@@ -49,9 +49,9 @@ export class GuaranteedReturnRule implements IRiskRule {
       return {
         id: "sig_r01",
         code: this.code,
-        title: "Guaranteed Return Language",
+        title: "Guaranteed Return Pattern",
         description: "Promises of guaranteed or fixed returns carry high risk. SEBI regulations explicitly prohibit guaranteed return promises on equity investments.",
-        severity: "CRITICAL",
+        severity: "HIGH",
         matchedTextSnippet: match[0],
         relatedClaimId: "cl_return_1",
       };
@@ -74,7 +74,7 @@ export class UrgencyPressureRule implements IRiskRule {
       return {
         id: "sig_r02",
         code: this.code,
-        title: "Artificial Urgency Pressure",
+        title: "Artificial Urgency Pressure Pattern",
         description: "Creating artificial deadline pressure reduces your time to independently verify credentials before transferring funds.",
         severity: "HIGH",
         matchedTextSnippet: match[0],
@@ -90,7 +90,7 @@ export class DirectPaymentRequestRule implements IRiskRule {
 
   evaluate(context: AnalysisContext): RiskSignal | null {
     const text = context.normalizedText;
-    const regex = /(deposit|pay|transfer|fee|upi|gpay|phonepe) \d+/i;
+    const regex = /(deposit|pay|transfer|fee|upi|gpay|phonepe)\s+(?:rupees|rs|inr|₹)?\s*\d+/i;
     const match = text.match(regex);
 
     if (match && match.index !== undefined) {
@@ -98,9 +98,9 @@ export class DirectPaymentRequestRule implements IRiskRule {
       return {
         id: "sig_r03",
         code: this.code,
-        title: "Direct Upfront Payment Request",
+        title: "Direct Upfront Payment Request Pattern",
         description: "Asks for monetary transfer into unverified advisory channels or personal bank/UPI destinations.",
-        severity: "CRITICAL",
+        severity: "HIGH",
         matchedTextSnippet: match[0],
         relatedClaimId: "cl_payment_1",
       };
@@ -123,9 +123,9 @@ export class RegulatoryIdentityClaimRule implements IRiskRule {
       return {
         id: "sig_r04",
         code: this.code,
-        title: "Unverified Regulatory Identity Claim",
+        title: "Unverified Regulatory Identity Claim Pattern",
         description: "The sender claims official SEBI registration or approval; this must be independently verified on official public registers.",
-        severity: "HIGH",
+        severity: "MEDIUM",
         matchedTextSnippet: match[0],
         relatedClaimId: "cl_sebi_1",
       };
@@ -148,7 +148,7 @@ export class OffPlatformRedirectionRule implements IRiskRule {
       return {
         id: "sig_r05",
         code: this.code,
-        title: "Off-Platform Group Redirection",
+        title: "Off-Platform Group Redirection Pattern",
         description: "Moves conversation to private messaging channels (Telegram/WhatsApp) where identity verification is difficult.",
         severity: "MEDIUM",
         matchedTextSnippet: match[0],

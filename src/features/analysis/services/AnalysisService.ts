@@ -63,7 +63,7 @@ export class MockAnalysisService implements IAnalysisService {
       normalizedText: extraction.normalizedText,
       claims,
       riskSignals,
-      verifiedEvidence: evidenceItems,
+      evidence: evidenceItems,
       uncertaintyItems,
       uncertaintyExplanation,
       recommendedSafeActions,
