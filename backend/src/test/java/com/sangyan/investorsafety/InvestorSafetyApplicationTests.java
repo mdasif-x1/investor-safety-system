@@ -147,7 +147,7 @@ class InvestorSafetyApplicationTests {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         AnalysisResponse body = response.getBody();
         assertThat(body.evidence()).anyMatch(e -> "UNVERIFIED".equalsIgnoreCase(e.status().name()));
-        assertThat(body.evidence().get(0).explanation()).contains("official SEBI database web portal does not expose a public REST endpoint");
+        assertThat(body.evidence().get(0).explanation()).contains("could not be independently matched to a definitive active official record");
     }
 
     @Test

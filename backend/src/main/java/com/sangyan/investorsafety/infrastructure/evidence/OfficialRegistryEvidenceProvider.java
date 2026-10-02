@@ -112,26 +112,26 @@ public class OfficialRegistryEvidenceProvider implements EvidenceProvider {
                 "Official SEBI Intermediary Registry",
                 EvidenceSourceType.OFFICIAL_REGISTRY,
                 EvidenceStatus.CONTRADICTED,
-                "[AUTHORITATIVE FIXTURE] Official SEBI registry search returned no active or valid registration record for registration number " + regNumber + ".",
+                "[AUTHORITATIVE FIXTURE] Official SEBI registry search explicitly returned a registration mismatch/cancelled record for registration number " + regNumber + ".",
                 "https://scores.sebi.gov.in/",
                 timestamp,
-                "Official SEBI Intermediary Registry query confirmed registration number is invalid or non-existent."
+                "Official SEBI Intermediary Registry query confirmed registration number belongs to a different entity or is explicitly revoked."
             ));
             return new EvidenceResponse(evidenceItems, uncertaintyItems, recommendedSafeActions, ProviderStatus.SUCCESS);
         }
 
+        // Case C: Unmapped/No-match registration number (MUST return UNVERIFIED, not CONTRADICTED)
         if (!verificationEnabled) {
-            // Case C: Real-world endpoint is not programmatically queryable (No public open REST API provided by SEBI)
             evidenceItems.add(new EvidenceItem(
                 "ev_sebi_unverified",
                 sebiClaim.id(),
                 "Official SEBI Recognised Intermediaries Directory",
                 EvidenceSourceType.OFFICIAL_GUIDANCE,
                 EvidenceStatus.UNVERIFIED,
-                "Registration number " + regNumber + " was identified, but official SEBI database web portal does not expose a public REST endpoint. Independent manual verification on official SEBI portal is required.",
+                "The supplied registration number (" + regNumber + ") could not be independently matched to a definitive active official record. A missing or unmapped query result does not independently prove the claim is false; independent manual lookup on official SEBI portal is required.",
                 "https://scores.sebi.gov.in/",
                 timestamp,
-                "SEBI public directory lacks open REST API; manual portal query required."
+                "SEBI public directory lacks open REST API; no-match query yields UNVERIFIED status."
             ));
             return new EvidenceResponse(evidenceItems, uncertaintyItems, recommendedSafeActions, ProviderStatus.UNABLE_TO_VERIFY);
         }
