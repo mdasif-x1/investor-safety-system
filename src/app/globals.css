@@ -1,0 +1,58 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surface Tokens */
+  --background: #f8fafc; /* Crisp warm light slate background */
+  --surface: #ffffff;    /* Pure white primary surface */
+  --surface-elevated: #ffffff;
+  --surface-muted: #f1f5f9;
+
+  /* Border Tokens */
+  --border: #e2e8f0;
+  --border-subtle: #cbd5e1;
+
+  /* Text Tokens */
+  --text-primary: #0f172a;    /* Deep charcoal navy */
+  --text-secondary: #334155;  /* Muted slate text */
+  --text-muted: #64748b;      /* Light muted text */
+
+  /* Brand / Institutional Accent */
+  --brand-primary: #0f2942;   /* Institutional Navy */
+  --brand-hover: #1e3a5f;
+  --brand-light: #f0f4f8;
+
+  --accent-saffron: #c9521e;  /* Restrained terracotta/saffron warm accent */
+  --accent-saffron-light: #fdf2ed;
+
+  /* Semantic Status Tokens (Risk & Evidence) */
+  --status-success: #0d9488;    /* Teal success */
+  --status-success-bg: #f0fdf4;
+  
+  --status-warning: #d97706;    /* Warm Amber */
+  --status-warning-bg: #fffbeb;
+
+  --status-danger: #dc2626;     /* Crimson Red */
+  --status-danger-bg: #fef2f2;
+
+  --status-info: #0284c7;       /* Calm Sky Info */
+  --status-info-bg: #f0f9ff;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  color: var(--text-primary);
+  background-color: var(--background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible outline focus state */
+*:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
