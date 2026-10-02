@@ -57,8 +57,8 @@ public class AnalysisService {
     private List<Claim> extractClaims(String text) {
         List<Claim> claims = new ArrayList<>();
 
-        // Regulatory claim
-        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered\\s+[a-z]+|sebi\\s+expert|sebi\\s+approved|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
+        // 1. Regulatory Identity Claim
+        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered\\s+[a-z]+|sebi\\s+expert|sebi\\s+approved|sebi\\s+registered|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
         Matcher sebiMatcher = sebiPattern.matcher(text);
         if (sebiMatcher.find()) {
             claims.add(new Claim(
@@ -71,8 +71,8 @@ public class AnalysisService {
             ));
         }
 
-        // Guaranteed return claim
-        Pattern returnPattern = Pattern.compile("(guaranteed|assured|100%|fixed)\\s+(returns?|profits?|income|monthly|daily)", Pattern.CASE_INSENSITIVE);
+        // 2. Guaranteed Return Claim
+        Pattern returnPattern = Pattern.compile("(guaranteed|assured|100%|fixed)\\s+(returns?|profits?|income|monthly|daily|[0-9]+%)", Pattern.CASE_INSENSITIVE);
         Matcher returnMatcher = returnPattern.matcher(text);
         if (returnMatcher.find()) {
             claims.add(new Claim(
@@ -85,7 +85,7 @@ public class AnalysisService {
             ));
         }
 
-        // Payment claim
+        // 3. Payment Request Claim
         Pattern paymentPattern = Pattern.compile("(?:deposit|pay|transfer|send)\\s+(?:the\\s+)?(?:registration\\s+|joining\\s+|advisory\\s+)?(?:fee|amount|deposit|money)?\\s*(?:of\\s+)?(?:rupees|rs\\.?|inr|₹)?\\s*\\d+", Pattern.CASE_INSENSITIVE);
         Matcher paymentMatcher = paymentPattern.matcher(text);
         if (paymentMatcher.find()) {
@@ -94,7 +94,21 @@ public class AnalysisService {
                 "The message contains a request for an upfront payment or deposit.",
                 ClaimCategory.PAYMENT_REQUEST,
                 paymentMatcher.group(0),
-                "Sender requires a money transfer before unlocking stock tips or group access.",
+                "The text explicitly requests a financial transfer or fee deposit.",
+                EvidenceStatus.UNVERIFIED
+            ));
+        }
+
+        // 4. Off-Platform Group Invitation Claim
+        Pattern groupPattern = Pattern.compile("(join\\s+telegram|vip\\s+group|whatsapp\\s+group|telegram\\s+group|telegram|t\\.me\\/|chat\\.whatsapp\\.com)", Pattern.CASE_INSENSITIVE);
+        Matcher groupMatcher = groupPattern.matcher(text);
+        if (groupMatcher.find()) {
+            claims.add(new Claim(
+                "cl_group_1",
+                "The message invites participation in a private messaging group (Telegram / WhatsApp).",
+                ClaimCategory.OFF_PLATFORM_INVITATION,
+                groupMatcher.group(0),
+                "Sender redirects conversation into private channels where identity oversight is limited.",
                 EvidenceStatus.UNVERIFIED
             ));
         }
@@ -105,6 +119,37 @@ public class AnalysisService {
     private List<RiskSignal> evaluateRiskSignals(String text) {
         List<RiskSignal> signals = new ArrayList<>();
 
+        // R01 — Guaranteed Return Rule
+        Pattern returnPattern = Pattern.compile("(guaranteed|assured|100%|fixed)\\s+(returns?|profits?|income|monthly|daily|[0-9]+%)", Pattern.CASE_INSENSITIVE);
+        Matcher returnMatcher = returnPattern.matcher(text);
+        if (returnMatcher.find() && !isNegatedOrEducational(text, returnMatcher.start())) {
+            signals.add(new RiskSignal(
+                "sig_r01",
+                "GUARANTEED_RETURN",
+                "Guaranteed Return Pattern",
+                "The message contains language promising guaranteed or fixed returns. Official SEBI guidance warns that guaranteed return promises on equity investments carry high risk.",
+                SignalSeverity.HIGH,
+                returnMatcher.group(0),
+                "cl_return_1"
+            ));
+        }
+
+        // R02 — Urgency Pressure Rule
+        Pattern urgencyPattern = Pattern.compile("(limited\\s+seats|act\\s+fast|today\\s+only|hurry|last\\s+chance|immediate\\s+join)", Pattern.CASE_INSENSITIVE);
+        Matcher urgencyMatcher = urgencyPattern.matcher(text);
+        if (urgencyMatcher.find() && !isNegatedOrEducational(text, urgencyMatcher.start())) {
+            signals.add(new RiskSignal(
+                "sig_r02",
+                "URGENCY_PRESSURE",
+                "Artificial Urgency Pressure Pattern",
+                "The message uses deadline pressure phrases. Creating artificial urgency reduces time to independently verify credentials before taking action.",
+                SignalSeverity.HIGH,
+                urgencyMatcher.group(0),
+                null
+            ));
+        }
+
+        // R03 — Direct Payment Request Rule
         Pattern paymentPattern = Pattern.compile("(?:deposit|pay|transfer|send)\\s+(?:the\\s+)?(?:registration\\s+|joining\\s+|advisory\\s+)?(?:fee|amount|deposit|money)?\\s*(?:of\\s+)?(?:rupees|rs\\.?|inr|₹)?\\s*\\d+", Pattern.CASE_INSENSITIVE);
         Matcher paymentMatcher = paymentPattern.matcher(text);
         if (paymentMatcher.find() && !isNegatedOrEducational(text, paymentMatcher.start())) {
@@ -119,6 +164,36 @@ public class AnalysisService {
             ));
         }
 
+        // R04 — Regulatory Identity Claim Rule
+        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered|sebi\\s+approved|govt\\s+approved|sebi\\s+expert|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
+        Matcher sebiMatcher = sebiPattern.matcher(text);
+        if (sebiMatcher.find() && !isNegatedOrEducational(text, sebiMatcher.start())) {
+            signals.add(new RiskSignal(
+                "sig_r04",
+                "REGULATORY_IDENTITY_CLAIM",
+                "Unverified Regulatory Identity Claim Pattern",
+                "The message mentions SEBI registration or approval; this regulatory reference requires independent verification on official public registers.",
+                SignalSeverity.MEDIUM,
+                sebiMatcher.group(0),
+                "cl_sebi_1"
+            ));
+        }
+
+        // R05 — Off-Platform Redirection Rule
+        Pattern groupPattern = Pattern.compile("(join\\s+telegram|vip\\s+group|whatsapp\\s+group|telegram\\s+group|telegram|t\\.me\\/|chat\\.whatsapp\\.com)", Pattern.CASE_INSENSITIVE);
+        Matcher groupMatcher = groupPattern.matcher(text);
+        if (groupMatcher.find() && !isNegatedOrEducational(text, groupMatcher.start())) {
+            signals.add(new RiskSignal(
+                "sig_r05",
+                "OFF_PLATFORM_REDIRECTION",
+                "Off-Platform Group Redirection Pattern",
+                "The message invites participation in private messaging channels (Telegram/WhatsApp) where identity oversight is limited.",
+                SignalSeverity.MEDIUM,
+                groupMatcher.group(0),
+                "cl_group_1"
+            ));
+        }
+
         return signals;
     }
 
@@ -128,8 +203,26 @@ public class AnalysisService {
         String snippet = text.substring(windowStart, windowEnd).toLowerCase();
 
         List<String> negationPhrases = List.of(
-            "not promised", "never pay", "never transfer", "educational purposes only",
-            "learn about payment scams", "learn about", "scam awareness"
+            "not promised",
+            "are not promised",
+            "never promised",
+            "no guaranteed",
+            "not guaranteed",
+            "never share your",
+            "dont share",
+            "don't share",
+            "never pay",
+            "never transfer",
+            "educational purposes only",
+            "educational guide",
+            "learn about common investment scams",
+            "learn about payment scams",
+            "learn about",
+            "how fake investment",
+            "explain mutual fund risks",
+            "trick investors",
+            "scammers often",
+            "scam awareness"
         );
 
         return negationPhrases.stream().anyMatch(snippet::contains);
