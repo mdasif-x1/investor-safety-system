@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import Link from "next/link";
 import {
   ShieldAlert,
@@ -33,7 +33,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed font-normal">
-              Received a suspicious stock tip on WhatsApp, Telegram, or Instagram? Paste the claim or screenshot to detect warning signals, inspect verified evidence, and take a safer next step.
+              Received a suspicious stock tip on WhatsApp, Telegram, or Instagram? Paste the claim or screenshot to detect warning signals, inspect available evidence, and take a safer next step.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full justify-center">
@@ -55,7 +55,7 @@ export default function HomePage() {
                 <Lock className="w-3.5 h-3.5 text-emerald-600" /> No password / OTP required
               </span>
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-sky-600" /> Non-commercial & independent
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-600" /> Non-commercial &amp; independent
               </span>
               <span className="flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-amber-600" /> No investment recommendations
@@ -88,7 +88,7 @@ export default function HomePage() {
                       Sample Analysis Case
                     </span>
                     <h3 className="text-base font-bold text-[var(--text-primary)]">
-                      WhatsApp Message: &quot;Join VIP SEBI Channel — Guaranteed 300% Monthly Profit&quot;
+                      WhatsApp Message: &quot;SEBI Registered Expert. Guaranteed 25% monthly returns. Deposit ₹20,000.&quot;
                     </h3>
                   </div>
                   <SeverityBadge severity="HIGH" />
@@ -103,7 +103,7 @@ export default function HomePage() {
                       <span>1. What the Message Claims</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Offers guaranteed stock advisory returns and claims SEBI registration via VIP Telegram group.
+                      Claims SEBI approval, promises guaranteed returns, and requests upfront payment.
                     </p>
                   </div>
 
@@ -114,29 +114,29 @@ export default function HomePage() {
                       <span>2. What We Detected</span>
                     </div>
                     <p className="text-xs text-amber-800 leading-relaxed">
-                      Detected 3 high-risk signals: Guaranteed returns promise, urgency pressure, and unverified broker links.
+                      Detected warning patterns: Guaranteed return promise, upfront payment demand, and unverified registration assertion.
                     </p>
                   </div>
 
                   {/* Stage 3 */}
-                  <div className="p-3.5 rounded bg-emerald-50 border border-emerald-200 flex flex-col gap-1">
-                    <div className="flex items-center gap-2 font-semibold text-emerald-900">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>3. What We Verified</span>
+                  <div className="p-3.5 rounded bg-sky-50 border border-sky-200 flex flex-col gap-1">
+                    <div className="flex items-center gap-2 font-semibold text-sky-900">
+                      <HelpCircle className="w-4 h-4 text-sky-600" />
+                      <span>3. What We Can Verify</span>
                     </div>
-                    <p className="text-xs text-emerald-800 leading-relaxed">
-                      Entity name &quot;VIP Trade Corp&quot; does NOT match SEBI registered research analyst registry.
+                    <p className="text-xs text-sky-800 leading-relaxed">
+                      No official entity registration number was provided in text. Registration status remains <strong>INSUFFICIENT INFORMATION</strong>.
                     </p>
                   </div>
 
                   {/* Stage 4 */}
-                  <div className="p-3.5 rounded bg-sky-50 border border-sky-200 flex flex-col gap-1">
-                    <div className="flex items-center gap-2 font-semibold text-sky-900">
-                      <HelpCircle className="w-4 h-4 text-sky-600" />
-                      <span>4. What We Couldn&apos;t Verify</span>
+                  <div className="p-3.5 rounded bg-slate-50 border border-slate-200 flex flex-col gap-1">
+                    <div className="flex items-center gap-2 font-semibold text-slate-900">
+                      <HelpCircle className="w-4 h-4 text-slate-600" />
+                      <span>4. What Remains Uncertain</span>
                     </div>
-                    <p className="text-xs text-sky-800 leading-relaxed">
-                      Group administrator identity is masked behind international VoIP numbers.
+                    <p className="text-xs text-slate-800 leading-relaxed">
+                      Sender identity cannot be independently established without official registration credentials.
                     </p>
                   </div>
                 </div>
@@ -148,12 +148,14 @@ export default function HomePage() {
                       5. Recommended Safe Next Step
                     </span>
                     <span className="text-xs text-[var(--text-secondary)]">
-                      Do not send money or join payment links. Verify official SEBI Research Analysts on SCORES.
+                      Refrain from making upfront deposits. Verify registered intermediaries on official SEBI SCORES portal.
                     </span>
                   </div>
-                  <Button variant="outline" size="sm" className="bg-white shrink-0">
-                    Learn How to Verify
-                  </Button>
+                  <Link href="/check">
+                    <Button variant="outline" size="sm" className="bg-white shrink-0">
+                      Check a Message
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </Card>
@@ -170,7 +172,7 @@ export default function HomePage() {
                 Designed for First-Time Digital Investors
               </h2>
               <p className="text-sm text-[var(--text-muted)]">
-                A simple outer experience backed by transparent risk analysis and public evidence registries.
+                A simple outer experience backed by transparent risk analysis and public evidence boundaries.
               </p>
             </div>
 
@@ -191,7 +193,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-bold text-base text-[var(--text-primary)]">Instant Pattern Match</h3>
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                  Our rule engine extracts claims, identifies high-risk urgency indicators, and checks entity registration statuses.
+                  Our rule engine extracts claims, identifies high-risk warning indicators, and explains evidence boundaries.
                 </p>
               </Card>
 
