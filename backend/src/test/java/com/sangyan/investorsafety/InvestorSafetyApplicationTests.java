@@ -169,4 +169,101 @@ class InvestorSafetyApplicationTests {
         assertThat(body.evidence()).anyMatch(e -> "CONTRADICTED".equalsIgnoreCase(e.status().name()));
         assertThat(body.evidence().get(0).explanation()).contains("[AUTHORITATIVE FIXTURE]");
     }
+
+    // Phase 5.6.1 Dedicated Security & Reliability Regression Tests
+    @Test
+    void testPhase561_BlankInput_ReturnsBadRequest() {
+        AnalysisRequest request = new AnalysisRequest("   ");
+        ResponseEntity<com.sangyan.investorsafety.dto.response.ErrorResponse> response = restTemplate.postForEntity(
+            "/api/v1/analysis", request, com.sangyan.investorsafety.dto.response.ErrorResponse.class
+        );
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().status()).isEqualTo(400);
+        assertThat(response.getBody().message()).contains("Text input cannot be blank");
+    }
+
+    @Test
+    void testPhase561_OversizedInput_ReturnsBadRequest() {
+        String longText = "A".repeat(10001);
+        AnalysisRequest request = new AnalysisRequest(longText);
+        ResponseEntity<com.sangyan.investorsafety.dto.response.ErrorResponse> response = restTemplate.postForEntity(
+            "/api/v1/analysis", request, com.sangyan.investorsafety.dto.response.ErrorResponse.class
+        );
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().status()).isEqualTo(400);
+        assertThat(response.getBody().message()).contains("Text input exceeds maximum length");
+    }
+
+    @Test
+    void testPhase561_VerificationDisabled_ZeroNetworkCalls() {
+        com.sangyan.investorsafety.infrastructure.evidence.MockEvidenceProvider mockProvider = 
+            new com.sangyan.investorsafety.infrastructure.evidence.MockEvidenceProvider();
+        
+        org.springframework.web.client.RestClient spyRestClient = org.mockito.Mockito.spy(org.springframework.web.client.RestClient.builder().build());
+        
+        com.sangyan.investorsafety.infrastructure.evidence.OfficialRegistryEvidenceProvider provider = 
+            new com.sangyan.investorsafety.infrastructure.evidence.OfficialRegistryEvidenceProvider(mockProvider, false, spyRestClient);
+
+        com.sangyan.investorsafety.domain.model.Claim claim = new com.sangyan.investorsafety.domain.model.Claim(
+            "c1", "We are SEBI registered entity INA00008888.", com.sangyan.investorsafety.domain.model.ClaimCategory.REGULATORY_IDENTITY, "INA00008888", "test", com.sangyan.investorsafety.domain.model.EvidenceStatus.UNVERIFIED
+        );
+        com.sangyan.investorsafety.domain.port.EvidenceRequest request = new com.sangyan.investorsafety.domain.port.EvidenceRequest(
+            java.util.List.of(claim), java.util.List.of()
+        );
+
+        com.sangyan.investorsafety.domain.port.EvidenceResponse response = provider.evaluateEvidenceAndUncertainty(request);
+        
+        assertThat(response.evidenceItems()).anyMatch(e -> com.sangyan.investorsafety.domain.model.EvidenceStatus.UNVERIFIED.equals(e.status()));
+        org.mockito.Mockito.verifyNoInteractions(spyRestClient);
+    }
+
+    @Test
+    void testPhase561_ProviderTimeout_ReturnsSourceUnavailable() {
+        com.sangyan.investorsafety.infrastructure.evidence.MockEvidenceProvider mockProvider = 
+            new com.sangyan.investorsafety.infrastructure.evidence.MockEvidenceProvider();
+        
+        org.springframework.web.client.RestClient mockRestClient = org.mockito.Mockito.mock(org.springframework.web.client.RestClient.class);
+        org.mockito.BDDMockito.given(mockRestClient.get()).willThrow(new org.springframework.web.client.ResourceAccessException("Read timed out"));
+
+        com.sangyan.investorsafety.infrastructure.evidence.OfficialRegistryEvidenceProvider provider = 
+            new com.sangyan.investorsafety.infrastructure.evidence.OfficialRegistryEvidenceProvider(mockProvider, true, mockRestClient);
+
+        com.sangyan.investorsafety.domain.model.Claim claim = new com.sangyan.investorsafety.domain.model.Claim(
+            "c1", "We are SEBI registered entity INA00007777.", com.sangyan.investorsafety.domain.model.ClaimCategory.REGULATORY_IDENTITY, "INA00007777", "test", com.sangyan.investorsafety.domain.model.EvidenceStatus.UNVERIFIED
+        );
+        com.sangyan.investorsafety.domain.port.EvidenceRequest request = new com.sangyan.investorsafety.domain.port.EvidenceRequest(
+            java.util.List.of(claim), java.util.List.of()
+        );
+
+        com.sangyan.investorsafety.domain.port.EvidenceResponse response = provider.evaluateEvidenceAndUncertainty(request);
+        
+        assertThat(response.evidenceItems()).anyMatch(e -> com.sangyan.investorsafety.domain.model.EvidenceStatus.SOURCE_UNAVAILABLE.equals(e.status()));
+        assertThat(response.evidenceItems()).noneMatch(e -> com.sangyan.investorsafety.domain.model.EvidenceStatus.CONTRADICTED.equals(e.status()));
+        assertThat(response.evidenceItems()).noneMatch(e -> com.sangyan.investorsafety.domain.model.EvidenceStatus.SUPPORTED.equals(e.status()));
+    }
+
+    @Test
+    void testPhase561_Provider5xx_ReturnsSourceUnavailable() {
+        com.sangyan.investorsafety.infrastructure.evidence.MockEvidenceProvider mockProvider = 
+            new com.sangyan.investorsafety.infrastructure.evidence.MockEvidenceProvider();
+        
+        org.springframework.web.client.RestClient mockRestClient = org.mockito.Mockito.mock(org.springframework.web.client.RestClient.class);
+        org.mockito.BDDMockito.given(mockRestClient.get()).willThrow(new org.springframework.web.client.HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Server Error"));
+
+        com.sangyan.investorsafety.infrastructure.evidence.OfficialRegistryEvidenceProvider provider = 
+            new com.sangyan.investorsafety.infrastructure.evidence.OfficialRegistryEvidenceProvider(mockProvider, true, mockRestClient);
+
+        com.sangyan.investorsafety.domain.model.Claim claim = new com.sangyan.investorsafety.domain.model.Claim(
+            "c1", "We are SEBI registered entity INA00006666.", com.sangyan.investorsafety.domain.model.ClaimCategory.REGULATORY_IDENTITY, "INA00006666", "test", com.sangyan.investorsafety.domain.model.EvidenceStatus.UNVERIFIED
+        );
+        com.sangyan.investorsafety.domain.port.EvidenceRequest request = new com.sangyan.investorsafety.domain.port.EvidenceRequest(
+            java.util.List.of(claim), java.util.List.of()
+        );
+
+        com.sangyan.investorsafety.domain.port.EvidenceResponse response = provider.evaluateEvidenceAndUncertainty(request);
+        
+        assertThat(response.evidenceItems()).anyMatch(e -> com.sangyan.investorsafety.domain.model.EvidenceStatus.SOURCE_UNAVAILABLE.equals(e.status()));
+    }
 }

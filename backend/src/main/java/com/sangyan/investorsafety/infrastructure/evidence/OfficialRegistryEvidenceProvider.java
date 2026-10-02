@@ -34,6 +34,17 @@ public class OfficialRegistryEvidenceProvider implements EvidenceProvider {
 
     public OfficialRegistryEvidenceProvider(
         MockEvidenceProvider fallbackProvider,
+        boolean verificationEnabled,
+        RestClient restClient
+    ) {
+        this.fallbackProvider = fallbackProvider;
+        this.verificationEnabled = verificationEnabled;
+        this.restClient = restClient;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public OfficialRegistryEvidenceProvider(
+        MockEvidenceProvider fallbackProvider,
         @Value("${investor-safety.verification.enabled:false}") boolean verificationEnabled,
         @Value("${investor-safety.verification.base-url:https://scores.sebi.gov.in/}") String baseUrl
     ) {
