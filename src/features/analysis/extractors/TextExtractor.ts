@@ -1,4 +1,6 @@
-﻿export interface ExtractionResult {
+import { recognize } from "tesseract.js";
+
+export interface ExtractionResult {
   rawText: string;
   normalizedText: string;
   extractedFrom: "TEXT" | "IMAGE";
@@ -26,27 +28,39 @@ export class TextExtractor implements ITextExtractor {
   }
 
   async extractFromImage(file: File): Promise<ExtractionResult> {
-    // Simulated OCR extraction logic for prototype phase with realistic extracted claims
-    let mockExtractedText = "SEBI Registered Expert. Guaranteed 25% monthly returns. Limited seats. Join our Telegram group and deposit ₹20,000 today.";
-    
-    // Customize mock text based on filename if provided for demo testing
-    if (file.name.toLowerCase().includes("legit") || file.name.toLowerCase().includes("webinar")) {
-      mockExtractedText = "SEBI investor education webinar explaining mutual fund risks and diversification.";
-    } else if (file.name.toLowerCase().includes("edu") || file.name.toLowerCase().includes("disclaimer")) {
-      mockExtractedText = "Educational purposes only. Guaranteed returns are not promised. Join our Telegram channel to learn about common investment scams.";
-    }
+    try {
+      // Local client-side browser OCR processing
+      const { data } = await recognize(file, "eng");
+      const extractedText = data.text ? data.text.trim() : "";
 
-    const normalizedText = this.normalize(mockExtractedText);
-    return {
-      rawText: mockExtractedText,
-      normalizedText,
-      extractedFrom: "IMAGE",
-      metadata: {
-        filename: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
-      },
-    };
+      if (!extractedText || extractedText.length === 0) {
+        throw new Error("No readable text was extracted from this image. Please upload a clearer screenshot or paste the message text manually.");
+      }
+
+      if (extractedText.length > 10000) {
+        throw new Error("Extracted screenshot text exceeds maximum allowed length (10,000 characters). Please crop the screenshot to the relevant message.");
+      }
+
+      const normalizedText = this.normalize(extractedText);
+      return {
+        rawText: extractedText,
+        normalizedText,
+        extractedFrom: "IMAGE",
+        metadata: {
+          filename: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+        },
+      };
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("No readable text")) {
+        throw err;
+      }
+      if (err instanceof Error && err.message.includes("exceeds maximum allowed length")) {
+        throw err;
+      }
+      throw new Error("Failed to read text from screenshot. Please try a clearer screenshot or paste the message manually.");
+    }
   }
 
   private normalize(text: string): string {
