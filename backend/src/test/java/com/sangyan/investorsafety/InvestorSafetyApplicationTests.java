@@ -128,4 +128,53 @@ class InvestorSafetyApplicationTests {
         assertThat(body.riskSignals().size()).isGreaterThanOrEqualTo(3);
         assertThat(body.recommendedSafeActions()).isNotEmpty();
     }
+
+    // Phase 5.3 Evidence Provider Boundary Tests
+    @Test
+    void testPhase53_UnverifiedState() {
+        AnalysisRequest request = new AnalysisRequest("We are SEBI registered.");
+        ResponseEntity<AnalysisResponse> response = restTemplate.postForEntity("/api/v1/analysis", request, AnalysisResponse.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AnalysisResponse body = response.getBody();
+        assertThat(body.evidence()).anyMatch(e -> "UNVERIFIED".equalsIgnoreCase(e.status().name()));
+        assertThat(body.evidence().get(0).scope()).contains("Independent public lookup required");
+    }
+
+    @Test
+    void testPhase53_InsufficientInformationState() {
+        AnalysisRequest request = new AnalysisRequest("We are SEBI registered entity TEST-INSUFFICIENT-INFO.");
+        ResponseEntity<AnalysisResponse> response = restTemplate.postForEntity("/api/v1/analysis", request, AnalysisResponse.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AnalysisResponse body = response.getBody();
+        assertThat(body.evidence()).anyMatch(e -> "INSUFFICIENT_INFORMATION".equalsIgnoreCase(e.status().name()));
+    }
+
+    @Test
+    void testPhase53_SourceUnavailableState() {
+        AnalysisRequest request = new AnalysisRequest("We are SEBI registered entity TEST-SOURCE-UNAVAILABLE.");
+        ResponseEntity<AnalysisResponse> response = restTemplate.postForEntity("/api/v1/analysis", request, AnalysisResponse.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AnalysisResponse body = response.getBody();
+        assertThat(body.evidence()).anyMatch(e -> "SOURCE_UNAVAILABLE".equalsIgnoreCase(e.status().name()));
+    }
+
+    @Test
+    void testPhase53_SupportedMockFixture() {
+        AnalysisRequest request = new AnalysisRequest("We are SEBI registered entity TEST-VERIFIED-001.");
+        ResponseEntity<AnalysisResponse> response = restTemplate.postForEntity("/api/v1/analysis", request, AnalysisResponse.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AnalysisResponse body = response.getBody();
+        assertThat(body.evidence()).anyMatch(e -> "SUPPORTED".equalsIgnoreCase(e.status().name()));
+        assertThat(body.evidence().get(0).explanation()).contains("[PROTOTYPE TEST FIXTURE]");
+    }
+
+    @Test
+    void testPhase53_ContradictedMockFixture() {
+        AnalysisRequest request = new AnalysisRequest("We are SEBI registered entity TEST-CONTRADICTED-001.");
+        ResponseEntity<AnalysisResponse> response = restTemplate.postForEntity("/api/v1/analysis", request, AnalysisResponse.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AnalysisResponse body = response.getBody();
+        assertThat(body.evidence()).anyMatch(e -> "CONTRADICTED".equalsIgnoreCase(e.status().name()));
+        assertThat(body.evidence().get(0).explanation()).contains("[PROTOTYPE TEST FIXTURE]");
+    }
 }

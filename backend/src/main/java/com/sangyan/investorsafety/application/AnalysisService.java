@@ -7,6 +7,8 @@ import com.sangyan.investorsafety.domain.model.RiskSignal;
 import com.sangyan.investorsafety.domain.model.SafetyAnalysisResult;
 import com.sangyan.investorsafety.domain.model.SignalSeverity;
 import com.sangyan.investorsafety.domain.port.EvidenceProvider;
+import com.sangyan.investorsafety.domain.port.EvidenceRequest;
+import com.sangyan.investorsafety.domain.port.EvidenceResponse;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -32,8 +34,8 @@ public class AnalysisService {
         List<Claim> claims = extractClaims(normalizedText);
         List<RiskSignal> riskSignals = evaluateRiskSignals(normalizedText);
 
-        EvidenceProvider.EvidenceEvaluationResult evalResult =
-            evidenceProvider.evaluateEvidenceAndUncertainty(claims, riskSignals);
+        EvidenceRequest evidenceRequest = new EvidenceRequest(claims, riskSignals);
+        EvidenceResponse evalResult = evidenceProvider.evaluateEvidenceAndUncertainty(evidenceRequest);
 
         String uncertaintyExplanation = !riskSignals.isEmpty()
             ? "This message contains characteristics that deserve caution. The system has not established that the sender is fraudulent, but identity and credentials remain unverified."
@@ -58,14 +60,14 @@ public class AnalysisService {
         List<Claim> claims = new ArrayList<>();
 
         // 1. Regulatory Identity Claim
-        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered\\s+[a-z]+|sebi\\s+expert|sebi\\s+approved|sebi\\s+registered|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
+        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered\\s+[a-z0-9_-]+|sebi\\s+expert|sebi\\s+approved|sebi\\s+registered|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
         Matcher sebiMatcher = sebiPattern.matcher(text);
         if (sebiMatcher.find()) {
             claims.add(new Claim(
                 "cl_sebi_1",
                 "The message claims SEBI registration or regulatory approval status.",
                 ClaimCategory.REGULATORY_IDENTITY,
-                sebiMatcher.group(0),
+                text,
                 "Sender explicitly asserts that they hold official SEBI registration or approval.",
                 EvidenceStatus.UNVERIFIED
             ));
@@ -165,7 +167,7 @@ public class AnalysisService {
         }
 
         // R04 — Regulatory Identity Claim Rule
-        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered|sebi\\s+approved|govt\\s+approved|sebi\\s+expert|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
+        Pattern sebiPattern = Pattern.compile("(sebi\\s+registered\\s+[a-z0-9_-]+|sebi\\s+expert|sebi\\s+approved|sebi\\s+registered|registered\\s+analyst)", Pattern.CASE_INSENSITIVE);
         Matcher sebiMatcher = sebiPattern.matcher(text);
         if (sebiMatcher.find() && !isNegatedOrEducational(text, sebiMatcher.start())) {
             signals.add(new RiskSignal(
