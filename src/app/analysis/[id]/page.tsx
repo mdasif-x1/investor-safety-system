@@ -90,7 +90,7 @@ export default function EvidenceAwareResultPage() {
                     <span className="text-xs text-[var(--text-muted)] font-mono">ID: {analysis.id}</span>
                   </div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--brand-primary)]">
-                    {hasHighRisk ? "Several Warning Signs Detected" : "No Major Scam Signals Detected"}
+                    {hasHighRisk ? "Several Warning Patterns Detected" : "No Major Warning Patterns Detected"}
                   </h1>
                 </div>
                 {analysis.riskSignals.length > 0 && (
@@ -125,7 +125,7 @@ export default function EvidenceAwareResultPage() {
                 </div>
 
                 {analysis.claims.length === 0 ? (
-                  <p className="text-xs text-[var(--text-muted)] italic">No explicit advisory claims extracted.</p>
+                  <p className="text-xs text-[var(--text-muted)] italic">No explicit advisory claims extracted from this text.</p>
                 ) : (
                   <div className="flex flex-col gap-3">
                     {analysis.claims.map((claim) => (
@@ -201,28 +201,32 @@ export default function EvidenceAwareResultPage() {
                   </h2>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  {analysis.evidence.map((ev) => (
-                    <div key={ev.id} className="p-4 bg-slate-50 border border-slate-200 rounded flex flex-col gap-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <span className="font-bold text-sm text-slate-900">{ev.sourceName}</span>
-                        <EvidenceBadge status={ev.status} />
+                {analysis.evidence.length === 0 ? (
+                  <p className="text-xs text-[var(--text-muted)] italic p-2">No specific regulatory guidance required for this text.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {analysis.evidence.map((ev) => (
+                      <div key={ev.id} className="p-4 bg-slate-50 border border-slate-200 rounded flex flex-col gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <span className="font-bold text-sm text-slate-900">{ev.sourceName}</span>
+                          <EvidenceBadge status={ev.status} />
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">{ev.explanation}</p>
+                        {ev.sourceUrl && (
+                          <a
+                            href={ev.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 hover:underline pt-1"
+                          >
+                            <span>Read Official Guidance</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
                       </div>
-                      <p className="text-xs text-slate-700 leading-relaxed">{ev.explanation}</p>
-                      {ev.sourceUrl && (
-                        <a
-                          href={ev.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 hover:underline pt-1"
-                        >
-                          <span>Open Official Public Source</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
 
               <Card variant="bordered" className="flex flex-col gap-4 bg-slate-50/80">
@@ -236,15 +240,19 @@ export default function EvidenceAwareResultPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  {analysis.uncertaintyItems.map((unc) => (
-                    <div key={unc.id} className="p-3.5 bg-white border border-slate-200 rounded flex flex-col gap-1 text-xs">
-                      <strong className="text-slate-900 font-bold">{unc.title}</strong>
-                      <span className="text-slate-700">{unc.explanation}</span>
-                      <span className="text-[11px] text-slate-500 italic mt-0.5">Reason: {unc.reason}</span>
-                    </div>
-                  ))}
-                </div>
+                {analysis.uncertaintyItems.length === 0 ? (
+                  <p className="text-xs text-[var(--text-muted)] italic p-2">No additional unresolved claim items identified.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {analysis.uncertaintyItems.map((unc) => (
+                      <div key={unc.id} className="p-3.5 bg-white border border-slate-200 rounded flex flex-col gap-1 text-xs">
+                        <strong className="text-slate-900 font-bold">{unc.title}</strong>
+                        <span className="text-slate-700">{unc.explanation}</span>
+                        <span className="text-[11px] text-slate-500 italic mt-0.5">Reason: {unc.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
 
@@ -260,76 +268,82 @@ export default function EvidenceAwareResultPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-red-800 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-red-600" /> DO NOW (Immediate Safety)
-                  </span>
-                  <ul className="flex flex-col gap-2.5 text-xs">
-                    {doNowActions.map((act) => (
-                      <li key={act.id} className="p-3 bg-white rounded border border-red-200 flex flex-col gap-1 shadow-subtle">
-                        <strong className="text-red-900 font-bold">{act.title}</strong>
-                        <span className="text-slate-700 leading-relaxed">{act.description}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {doNowActions.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-red-800 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600" /> DO NOW (Immediate Safety)
+                    </span>
+                    <ul className="flex flex-col gap-2.5 text-xs">
+                      {doNowActions.map((act) => (
+                        <li key={act.id} className="p-3 bg-white rounded border border-red-200 flex flex-col gap-1 shadow-subtle">
+                          <strong className="text-red-900 font-bold">{act.title}</strong>
+                          <span className="text-slate-700 leading-relaxed">{act.description}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-2 pt-2 border-t border-slate-200">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-sky-900 flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-600" /> VERIFY BEFORE ACTING
-                  </span>
-                  <ul className="flex flex-col gap-2.5 text-xs">
-                    {verifyActions.map((act) => (
-                      <li key={act.id} className="p-3 bg-white rounded border border-slate-200 flex flex-col gap-1 shadow-subtle">
-                        <strong className="text-[var(--brand-primary)] font-bold">{act.title}</strong>
-                        <span className="text-slate-700 leading-relaxed">{act.description}</span>
-                        {act.externalLink && (
-                          <a
-                            href={act.externalLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 hover:underline pt-1"
-                          >
-                            <span>Open Official Search Portal</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </a>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-3 border-t border-slate-300 flex flex-col gap-2">
-                  <button
-                    onClick={() => setShowAlreadyPaid(!showAlreadyPaid)}
-                    className="flex items-center justify-between text-xs font-bold text-slate-800 hover:text-[var(--brand-primary)] transition-colors w-full text-left p-2 rounded bg-slate-200/60"
-                  >
-                    <span>Already Transferred Money?</span>
-                    {showAlreadyPaid ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-
-                  {showAlreadyPaid && (
-                    <div className="flex flex-col gap-2 pt-1 text-xs">
-                      {paidActions.map((act) => (
-                        <div key={act.id} className="p-3 bg-amber-50 rounded border border-amber-300 flex flex-col gap-1">
-                          <strong className="text-amber-900 font-bold">{act.title}</strong>
-                          <span className="text-amber-950 leading-relaxed">{act.description}</span>
+                {verifyActions.length > 0 && (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-slate-200">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-sky-900 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-sky-600" /> VERIFY BEFORE ACTING
+                    </span>
+                    <ul className="flex flex-col gap-2.5 text-xs">
+                      {verifyActions.map((act) => (
+                        <li key={act.id} className="p-3 bg-white rounded border border-slate-200 flex flex-col gap-1 shadow-subtle">
+                          <strong className="text-[var(--brand-primary)] font-bold">{act.title}</strong>
+                          <span className="text-slate-700 leading-relaxed">{act.description}</span>
                           {act.externalLink && (
                             <a
                               href={act.externalLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-900 hover:underline pt-1"
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 hover:underline pt-1"
                             >
-                              <span>Official Cybercrime Portal</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <span>Open Official Search Portal</span>
+                              <ArrowRight className="w-3 h-3" />
                             </a>
                           )}
-                        </div>
+                        </li>
                       ))}
-                    </div>
-                  )}
-                </div>
+                    </ul>
+                  </div>
+                )}
+
+                {paidActions.length > 0 && (
+                  <div className="pt-3 border-t border-slate-300 flex flex-col gap-2">
+                    <button
+                      onClick={() => setShowAlreadyPaid(!showAlreadyPaid)}
+                      className="flex items-center justify-between text-xs font-bold text-slate-800 hover:text-[var(--brand-primary)] transition-colors w-full text-left p-2 rounded bg-slate-200/60"
+                    >
+                      <span>Already Transferred Money?</span>
+                      {showAlreadyPaid ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+
+                    {showAlreadyPaid && (
+                      <div className="flex flex-col gap-2 pt-1 text-xs">
+                        {paidActions.map((act) => (
+                          <div key={act.id} className="p-3 bg-amber-50 rounded border border-amber-300 flex flex-col gap-1">
+                            <strong className="text-amber-900 font-bold">{act.title}</strong>
+                            <span className="text-amber-950 leading-relaxed">{act.description}</span>
+                            {act.externalLink && (
+                              <a
+                                href={act.externalLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-900 hover:underline pt-1"
+                              >
+                                <span>Official Cybercrime Portal</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
 
               <Card variant="flat" className="p-4 bg-slate-100 border border-slate-200 flex flex-col gap-2 text-xs">

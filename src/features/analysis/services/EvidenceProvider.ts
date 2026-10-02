@@ -1,7 +1,7 @@
-import { Claim, EvidenceItem, UncertaintyItem, SafeAction } from "@/types/analysis";
+import { Claim, RiskSignal, EvidenceItem, UncertaintyItem, SafeAction } from "@/types/analysis";
 
 export interface IEvidenceProvider {
-  evaluateEvidenceAndUncertainty(claims: Claim[]): {
+  evaluateEvidenceAndUncertainty(claims: Claim[], riskSignals: RiskSignal[]): {
     evidenceItems: EvidenceItem[];
     uncertaintyItems: UncertaintyItem[];
     recommendedSafeActions: SafeAction[];
@@ -9,7 +9,7 @@ export interface IEvidenceProvider {
 }
 
 export class MockEvidenceProvider implements IEvidenceProvider {
-  evaluateEvidenceAndUncertainty(claims: Claim[]): {
+  evaluateEvidenceAndUncertainty(claims: Claim[], riskSignals: RiskSignal[]): {
     evidenceItems: EvidenceItem[];
     uncertaintyItems: UncertaintyItem[];
     recommendedSafeActions: SafeAction[];
@@ -18,91 +18,107 @@ export class MockEvidenceProvider implements IEvidenceProvider {
     const uncertaintyItems: UncertaintyItem[] = [];
     const recommendedSafeActions: SafeAction[] = [];
 
-    // 1. Evidence Items (Strictly honest semantics - no fake timestamps or fake contradiction)
-    evidenceItems.push({
-      id: "ev_sebi_registry",
-      sourceName: "Official SEBI Intermediary Database",
-      sourceType: "OFFICIAL_GUIDANCE",
-      status: "UNVERIFIED",
-      explanation: "The message claims SEBI registration. This prototype did not perform a live registry lookup against SEBI databases.",
-      sourceUrl: "https://scores.sebi.gov.in/",
-      scope: "Prototype scope: Live database lookup endpoint not queried.",
-    });
+    const hasRegulatoryClaim = claims.some((c) => c.category === "REGULATORY_IDENTITY");
+    const hasGuaranteedReturnClaim = claims.some((c) => c.category === "GUARANTEED_RETURN");
+    const hasPaymentClaim = claims.some((c) => c.category === "PAYMENT_REQUEST");
+    const hasOffPlatformClaim = claims.some((c) => c.category === "OFF_PLATFORM_INVITATION");
 
-    evidenceItems.push({
-      id: "ev_guaranteed_rule",
-      sourceName: "SEBI Advisory Code of Conduct & Regulations",
-      sourceType: "OFFICIAL_GUIDANCE",
-      status: "CONTRADICTED",
-      explanation: "SEBI regulations prohibit registered intermediaries from offering guaranteed or fixed returns on stock investments.",
-      sourceUrl: "https://investor.sebi.gov.in/",
-      scope: "Regulatory Policy Guidance",
-    });
+    const hasPaymentSignal = riskSignals.some((s) => s.code === "DIRECT_PAYMENT_REQUEST");
 
-    // 2. Uncertainty Items (Explaining unresolved aspects)
-    uncertaintyItems.push({
-      id: "unc_identity",
-      title: "Sender Identity Unresolved",
-      explanation: "The message contains a claimed identity or group title, but the submitted content alone does not establish who controls the account.",
-      reason: "Private messaging channels (Telegram/WhatsApp) mask account ownership.",
-    });
+    // 1. Condition-Dependent Evidence (Only present relevant evidence for detected claims)
+    if (hasRegulatoryClaim) {
+      evidenceItems.push({
+        id: "ev_sebi_registry",
+        sourceName: "Official SEBI Public Guidance",
+        sourceType: "OFFICIAL_GUIDANCE",
+        status: "UNVERIFIED",
+        explanation: "The message claims SEBI registration or regulatory approval. Independent verification through official SEBI public sources is required before acting.",
+        sourceUrl: "https://scores.sebi.gov.in/",
+        scope: "Independent public lookup required; prototype did not query live registry endpoints.",
+      });
 
-    uncertaintyItems.push({
-      id: "unc_registration",
-      title: "Registration Credentials Unverified",
-      explanation: "No live database query was executed against the official SEBI Research Analyst register in this prototype check.",
-      reason: "Full live database integration requires SEBI verification API endpoints.",
-    });
+      uncertaintyItems.push({
+        id: "unc_registration",
+        title: "Registration Status Unverified",
+        explanation: "The message claims regulatory approval, but no live database lookup was performed in this prototype check.",
+        reason: "Official registry validation requires live query against authoritative SEBI registers.",
+      });
 
-    uncertaintyItems.push({
-      id: "unc_performance",
-      title: "Historical Return Claims Unsupported",
-      explanation: "The message promises high percentage returns, but no independent trade performance logs were provided.",
-      reason: "Unverified return claims are commonly used in financial advisory marketing.",
-    });
+      recommendedSafeActions.push({
+        id: "sa_verify_reg",
+        title: "Verify Registration Independently",
+        description: "Open official SEBI public registers directly to confirm if the entity or advisor is genuinely registered.",
+        actionType: "SEBI_LOOKUP",
+        priority: "VERIFY_BEFORE_ACTING",
+        externalLink: "https://scores.sebi.gov.in/",
+      });
+    }
 
-    // 3. Safe Actions with correct semantics (DO_NOT_SHARE_CREDENTIALS separated from payment)
-    recommendedSafeActions.push({
-      id: "sa_do_now_1",
-      title: "Do Not Transfer Money Yet",
-      description: "Refrain from making UPI transfers or paying joining fees to unverified advisory channels.",
-      actionType: "REFRAIN_FROM_PAYMENT",
-      priority: "DO_NOW",
-    });
+    if (hasGuaranteedReturnClaim) {
+      evidenceItems.push({
+        id: "ev_guaranteed_rule",
+        sourceName: "SEBI Advisory Code of Conduct & Regulations",
+        sourceType: "OFFICIAL_GUIDANCE",
+        status: "UNVERIFIED",
+        explanation: "SEBI advisory regulations explicitly prohibit registered intermediaries from offering guaranteed or fixed returns on stock market investments.",
+        sourceUrl: "https://investor.sebi.gov.in/",
+        scope: "Regulatory policy guidance for investors.",
+      });
 
-    recommendedSafeActions.push({
-      id: "sa_do_now_2",
-      title: "Do Not Share Credentials or PINs",
-      description: "Never share your banking passwords, OTPs, or UPI PINs with anyone claiming to be a financial advisor.",
-      actionType: "DO_NOT_SHARE_CREDENTIALS",
-      priority: "DO_NOW",
-    });
+      uncertaintyItems.push({
+        id: "unc_performance",
+        title: "Historical Return Claims Unsupported",
+        explanation: "The message promises high percentage returns, but no independent trade performance logs or verified audits were provided.",
+        reason: "Unverified return promises are common in advisory marketing.",
+      });
+    }
 
-    recommendedSafeActions.push({
-      id: "sa_verify_1",
-      title: "Verify Registration Independently",
-      description: "Search official SEBI public portals directly to check if the entity is genuinely registered.",
-      actionType: "SEBI_LOOKUP",
-      priority: "VERIFY_BEFORE_ACTING",
-      externalLink: "https://scores.sebi.gov.in/",
-    });
+    if (hasPaymentClaim || hasPaymentSignal) {
+      recommendedSafeActions.push({
+        id: "sa_do_now_payment",
+        title: "Do Not Transfer Money Yet",
+        description: "Refrain from transferring money, paying deposit fees, or making UPI transfers to unverified advisory channels.",
+        actionType: "REFRAIN_FROM_PAYMENT",
+        priority: "DO_NOW",
+      });
 
-    recommendedSafeActions.push({
-      id: "sa_verify_2",
-      title: "Preserve Message Evidence",
-      description: "Keep original unedited screenshots showing group names and numbers in case you need to file a formal complaint.",
-      actionType: "PRESERVE_EVIDENCE",
-      priority: "VERIFY_BEFORE_ACTING",
-    });
+      recommendedSafeActions.push({
+        id: "sa_paid_cybercrime",
+        title: "Report Financial Fraud Promptly",
+        description: "If money has already been transferred, immediately notify your bank to freeze transactions and report on the National Cybercrime Portal.",
+        actionType: "REPORT_SUSPICIOUS_CONTENT",
+        priority: "IF_ALREADY_PAID",
+        externalLink: "https://cybercrime.gov.in/",
+      });
+    }
 
-    recommendedSafeActions.push({
-      id: "sa_paid_1",
-      title: "Report Financial Fraud Immediately",
-      description: "If money has already moved, immediately notify your bank and lodge a complaint on the National Cybercrime Reporting Portal.",
-      actionType: "REPORT_SUSPICIOUS_CONTENT",
-      priority: "IF_ALREADY_PAID",
-      externalLink: "https://cybercrime.gov.in/",
-    });
+    if (hasOffPlatformClaim) {
+      uncertaintyItems.push({
+        id: "unc_identity",
+        title: "Sender Identity Unresolved",
+        explanation: "The message invites participation in private messaging groups (Telegram/WhatsApp), where account ownership and identity cannot be verified from text alone.",
+        reason: "Private messaging platforms mask account ownership.",
+      });
+    }
+
+    // Always add baseline evidence preservation & credential safety if any risk signal is detected
+    if (riskSignals.length > 0) {
+      recommendedSafeActions.push({
+        id: "sa_do_now_credentials",
+        title: "Do Not Share Credentials or PINs",
+        description: "Never share banking passwords, OTPs, or UPI PINs with anyone claiming to provide stock tips or advisory services.",
+        actionType: "DO_NOT_SHARE_CREDENTIALS",
+        priority: "DO_NOW",
+      });
+
+      recommendedSafeActions.push({
+        id: "sa_verify_evidence",
+        title: "Preserve Message Evidence",
+        description: "Keep original unedited screenshots showing group names and numbers in case formal reporting is required.",
+        actionType: "PRESERVE_EVIDENCE",
+        priority: "VERIFY_BEFORE_ACTING",
+      });
+    }
 
     return { evidenceItems, uncertaintyItems, recommendedSafeActions };
   }

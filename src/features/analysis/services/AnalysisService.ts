@@ -44,13 +44,13 @@ export class MockAnalysisService implements IAnalysisService {
       normalizedText: extraction.normalizedText,
     });
 
-    // 3. Evaluate evidence & uncertainty layer
+    // 3. Evaluate condition-dependent evidence & uncertainty layer
     const { evidenceItems, uncertaintyItems, recommendedSafeActions } = 
-      this.evidenceProvider.evaluateEvidenceAndUncertainty(claims);
+      this.evidenceProvider.evaluateEvidenceAndUncertainty(claims, riskSignals);
 
     const uncertaintyExplanation = riskSignals.length > 0
       ? "This message contains characteristics that deserve caution. The system has not established that the sender is fraudulent, but identity and credentials remain unverified."
-      : "No major risk signals were detected in the submitted text. This does not independently establish that the sender or offer is legitimate.";
+      : "No major warning patterns were detected in the submitted text. Absence of detected warning patterns does not independently prove that the offer or sender is legitimate.";
 
     const result: SafetyAnalysisResult = {
       id: analysisId,
