@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -19,15 +19,15 @@
   --text-muted: #64748b;      /* Light muted text */
 
   /* Brand / Institutional Accent */
-  --brand-primary: #0f2942;   /* Institutional Navy */
-  --brand-hover: #1e3a5f;
-  --brand-light: #f0f4f8;
+  --brand-primary: #0b2545;   /* Deep Institutional Navy */
+  --brand-hover: #134074;
+  --brand-light: #eef4fb;
 
-  --accent-saffron: #c9521e;  /* Restrained terracotta/saffron warm accent */
+  --accent-saffron: #c9521e;  /* Restrained saffron warm accent */
   --accent-saffron-light: #fdf2ed;
 
   /* Semantic Status Tokens (Risk & Evidence) */
-  --status-success: #0d9488;    /* Teal success */
+  --status-success: #0d9488;    /* Deep Teal success */
   --status-success-bg: #f0fdf4;
   
   --status-warning: #d97706;    /* Warm Amber */

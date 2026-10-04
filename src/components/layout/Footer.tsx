@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import Link from "next/link";
 import { ShieldCheck, ExternalLink, Info } from "lucide-react";
 import { SITE_CONFIG } from "@/config/site";
@@ -66,7 +66,7 @@ export const Footer: React.FC = () => {
               {SITE_CONFIG.disclaimer}
             </p>
             <div className="text-[11px] text-slate-400 pt-2">
-              Risk Signal Detection $\neq$ Scam Verdict. Unverified $\neq$ False. Always double-check official SEBI registers before transferring money.
+              Risk Signal Detection is not a definitive Scam Verdict. Unverified does not mean proven false. Always double-check official SEBI registers before transferring money.
             </div>
           </div>
         </div>
